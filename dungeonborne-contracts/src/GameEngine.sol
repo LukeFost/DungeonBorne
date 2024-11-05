@@ -6,8 +6,9 @@ import "./RuneStone.sol";
 import "@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-contract GameEngine is IGameEngine, VRFConsumerBaseV2, Ownable {
+contract GameEngine is IGameEngine, VRFConsumerBaseV2, Ownable, ERC1155Holder {
     // Constants
     uint16 public constant MAX_FACING = 359;
     uint8 public constant BASE_DAMAGE = 10;  // Basic attack damage in MVP
