@@ -46,18 +46,6 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     }
 
 
-    struct Combat {
-        uint256 id;
-        uint256 playerId;
-        uint256 monsterId;
-        uint8 playerHp;
-        uint8 monsterHp;
-        bool playerTurn;
-        bool isActive;
-        uint256 lastAction;
-        uint256[] pendingRolls;
-    }
-
     // Game state
     mapping(address => uint256) public addressToPlayerId; // Mapping from address to playerId
     uint256 public constant GRID_SIZE = 1000;
@@ -67,7 +55,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     mapping(uint256 => Monster) public monsters;
     mapping(uint256 => Player) public players;
     mapping(uint256 => IGameEngine.Quest) public quests;
-    mapping(uint256 => Combat) public combats;
+    mapping(uint256 => IGameEngine.Combat) public combats;
     mapping(uint256 => mapping(uint256 => bool)) public questProgress; // questId => monsterId => defeated
 
     // Counters
@@ -194,7 +182,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
 
         uint256 combatId = nextCombatId++;
 
-        combats[combatId] = Combat({
+        combats[combatId] = IGameEngine.Combat({
             id: combatId,
             playerId: playerId,
             monsterId: monsterId,
