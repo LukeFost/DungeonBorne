@@ -26,12 +26,6 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, IGameEngine {
     uint256 private fee;
 
     // Game structures
-    struct Position {
-        uint16 x;
-        uint16 y;
-        uint16 facing; // degrees from north
-    }
-
     struct Monster {
         uint256 id;
         string name;

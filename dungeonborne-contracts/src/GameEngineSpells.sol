@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "./GameEngine.sol";
 import "./IGameEngine.sol";
 
-contract GameEngineSpells is GameEngine, IGameEngine {
+contract GameEngineSpells is GameEngine {
     // Spell and Ability storage
     mapping(uint256 => Spell) public spells;
     mapping(uint256 => Ability) public abilities;
