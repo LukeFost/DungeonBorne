@@ -6,7 +6,8 @@ import "../src/GameEngine.sol";
 import "../src/RuneStone.sol";
 import "../src/GameItems.sol";
 import "../src/IGameEngine.sol";
-import "../src/IGameEngine.sol";
+
+using GameEngine for Combat;
 
 contract GameEngineTest is Test {
     GameEngine public gameEngine;

@@ -45,16 +45,6 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         uint8 level;
     }
 
-    struct Quest {
-        uint256 id;
-        string name;
-        string description;
-        uint256[] requiredMonsters;
-        uint256[] requiredItems;
-        uint256[] rewardRuneIds;
-        uint256[] rewardAmounts;
-        bool isActive;
-    }
 
     struct Combat {
         uint256 id;
