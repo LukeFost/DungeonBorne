@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./RuneStone.sol";
 import "./GameItems.sol";
 import "./IGameEngine.sol";
@@ -79,7 +79,6 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     mapping(uint256 => Quest) public quests;
     mapping(uint256 => Combat) public combats;
     mapping(uint256 => mapping(uint256 => bool)) public questProgress; // questId => monsterId => defeated
-    mapping(address => uint256) public addressToPlayerId; // Mapping from address to playerId
 
     // Counters
     uint256 public nextMonsterId = 1;
@@ -105,7 +104,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     constructor(
         address _runeStones,
         address _gameItems
-    ) Ownable() {
+    ) Ownable(msg.sender) {
         oracle = LinkWellNodesClient(0x14bc7F6Da6cA3E072793c185e01a76E62341CC61);
         runeStones = RuneStonesOfPower(_runeStones);
         gameItems = GameItems(_gameItems);
