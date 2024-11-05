@@ -1,3 +1,6 @@
 [submodule "dungeonborne-contracts/lib/forge-std"]
 	path = dungeonborne-contracts/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "dungeonborne-contracts/lib/openzeppelin-contracts"]
+	path = dungeonborne-contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
