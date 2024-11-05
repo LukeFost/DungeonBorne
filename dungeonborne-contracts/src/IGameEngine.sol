@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+// Common structs used across interfaces
+struct Position {
+    uint16 x;
+    uint16 y;
+    uint16 facing;
+}
+
 interface IGameEngine {
     // Enums
     enum SpellSchool { NONE, EVOCATION, ABJURATION, CONJURATION, DIVINATION, ENCHANTMENT, ILLUSION, NECROMANCY, TRANSMUTATION }
@@ -21,11 +28,6 @@ interface IGameEngine {
         uint8 cha;
     }
 
-    struct Position {
-        uint16 x;
-        uint16 y;
-        uint16 facing;
-    }
 
     struct Spell {
         uint256 id;
