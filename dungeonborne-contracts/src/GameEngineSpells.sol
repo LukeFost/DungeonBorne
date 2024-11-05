@@ -80,10 +80,10 @@ contract GameEngineSpells is GameEngine, IGameEngine {
     mapping(uint256 => Ability) public abilities;
     
     // Player spell and ability management
-    mapping(address => mapping(uint256 => bool)) public playerSpells; // player address => spellId => owned
-    mapping(address => mapping(uint256 => bool)) public playerAbilities; // player address => abilityId => owned
-    mapping(address => mapping(uint256 => uint256)) public spellCooldowns; // player address => spellId => timestamp
-    mapping(address => mapping(uint256 => uint256)) public abilityCooldowns; // player address => abilityId => timestamp
+    mapping(uint256 => mapping(uint256 => bool)) public playerSpells; // playerId => spellId => owned
+    mapping(uint256 => mapping(uint256 => bool)) public playerAbilities; // playerId => abilityId => owned
+    mapping(uint256 => mapping(uint256 => uint256)) public spellCooldowns; // playerId => spellId => timestamp
+    mapping(uint256 => mapping(uint256 => uint256)) public abilityCooldowns; // playerId => abilityId => timestamp
     
     // Status effects
     mapping(uint256 => mapping(StatusEffect => uint256)) public statusEffects; // targetId => effect => expiry
@@ -134,7 +134,8 @@ contract GameEngineSpells is GameEngine, IGameEngine {
         );
         
         Spell memory spell = spells[spellId];
-        Player storage player = players[msg.sender];
+        uint256 playerId = getPlayerIdByAddress(msg.sender);
+        Player storage player = players[playerId];
         
         // Handle AoE spells
         if (spell.isAoE) {
@@ -146,7 +147,7 @@ contract GameEngineSpells is GameEngine, IGameEngine {
         // Apply cooldown
         spellCooldowns[msg.sender][spellId] = block.timestamp + spell.cooldown;
         
-        emit SpellCast(msg.sender, spellId, targetId, true, spell.damage);
+        emit SpellCast(getPlayerIdByAddress(msg.sender), spellId, targetId, true, spell.damage);
     }
 
     // AoE spell handling
@@ -233,6 +234,23 @@ contract GameEngineSpells is GameEngine, IGameEngine {
 
     function _randomChance(uint8 percentage) internal view returns (bool) {
         return uint8(uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender))) % 100) < percentage;
+    }
+
+    function learnSpell(uint256 spellId) external whenNotPaused {
+        uint256 playerId = getPlayerIdByAddress(msg.sender);
+        require(!playerSpells[playerId][spellId], "Spell already learned");
+        require(spells[spellId].id != 0, "Invalid spell");
+        playerSpells[playerId][spellId] = true;
+        emit SpellLearned(playerId, spellId);
+    }
+
+    function getPlayerIdByAddress(address playerAddr) internal view returns (uint256) {
+        for (uint256 i = 1; i < nextPlayerId; i++) {
+            if (players[i].addr == playerAddr) {
+                return i;
+            }
+        }
+        revert("Player not found");
     }
 
     // View functions for frontend

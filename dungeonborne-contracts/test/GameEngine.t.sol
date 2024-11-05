@@ -88,7 +88,7 @@ contract GameEngineTest is Test {
 
         gameEngine.registerPlayer("Hero1", stats);
         
-        (uint256 id, string memory name, , , bool isActive, , ) = gameEngine.players(1);
+        (uint256 id, string memory name, IGameEngine.Stats memory stats, Position memory pos, bool isActive, uint256 experience, uint256 lastAction, uint8 level) = gameEngine.players(1);
         
         assertEq(id, 1);
         assertEq(name, "Hero1");
@@ -120,7 +120,7 @@ contract GameEngineTest is Test {
             rewardAmounts
         );
         
-        (uint256 id, string memory name, , , , , , bool isActive) = gameEngine.quests(1);
+        (uint256 id, string memory name, string memory description, uint256[] memory requiredMonsters, uint256[] memory requiredItems, uint256[] memory rewardRuneIds, uint256[] memory rewardAmounts, bool isActive) = gameEngine.quests(1);
         
         assertEq(id, 1);
         assertEq(name, "Slay the Goblin");
