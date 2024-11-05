@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "../src/GameEngine.sol";
 import "../src/RuneStone.sol";
-import "../lib/chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2Mock.sol";
+import "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2Mock.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 contract GameEngineTest is Test, ERC1155Holder {
@@ -93,22 +93,7 @@ contract GameEngineTest is Test, ERC1155Holder {
         assertEq(monster.facing, INITIAL_FACING);
         assertTrue(monster.isActive);
     }
-    
-    function test_RevertSpawnMonsterInvalidFacing() public {
-        uint8[6] memory stats = [10, 12, 14, 8, 10, 8];
-        
-        vm.expectRevert("GameEngine: Invalid facing direction");
-        gameEngine.spawnMonster(
-            INITIAL_MONSTER_ID,
-            INITIAL_HP,
-            INITIAL_AC,
-            stats,
-            INITIAL_X,
-            INITIAL_Y,
-            360 // Invalid facing (must be 0-359)
-        );
-    }
-    
+
     function test_Attack() public {
         // Spawn monster
         uint8[6] memory stats = [10, 12, 14, 8, 10, 8];
@@ -132,6 +117,11 @@ contract GameEngineTest is Test, ERC1155Holder {
         // Attack monster as player
         vm.prank(player);
         gameEngine.attack(INITIAL_MONSTER_ID, tokenId);
+
+        // Process VRF callback
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = 12345;
+        vrfCoordinator.fulfillRandomWordsWithOverride(1, address(gameEngine), randomWords);
         
         // Get monster state after attack
         IGameEngine.Monster memory monster = gameEngine.getMonster(INITIAL_MONSTER_ID);
@@ -158,13 +148,16 @@ contract GameEngineTest is Test, ERC1155Holder {
             RuneStone.PowerLevel.COMMON
         );
         
-        // Expect MonsterDefeated event
-        vm.expectEmit(true, false, false, false);
-        emit MonsterDefeated(INITIAL_MONSTER_ID);
-        
-        // Attack monster as player
         vm.prank(player);
         gameEngine.attack(INITIAL_MONSTER_ID, tokenId);
+
+        // Process VRF callback and expect MonsterDefeated event
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = 12345;
+
+        vm.expectEmit(true, false, false, false);
+        emit MonsterDefeated(INITIAL_MONSTER_ID);
+        vrfCoordinator.fulfillRandomWordsWithOverride(1, address(gameEngine), randomWords);
         
         // Verify monster is defeated
         vm.expectRevert("GameEngine: Monster not active");
@@ -181,6 +174,21 @@ contract GameEngineTest is Test, ERC1155Holder {
         vm.prank(player);
         vm.expectRevert("GameEngine: Monster not active");
         gameEngine.attack(999, tokenId); // Non-existent monster ID
+    }
+    
+    function test_RevertSpawnMonsterInvalidFacing() public {
+        uint8[6] memory stats = [10, 12, 14, 8, 10, 8];
+        
+        vm.expectRevert("GameEngine: Invalid facing direction");
+        gameEngine.spawnMonster(
+            INITIAL_MONSTER_ID,
+            INITIAL_HP,
+            INITIAL_AC,
+            stats,
+            INITIAL_X,
+            INITIAL_Y,
+            360 // Invalid facing (must be 0-359)
+        );
     }
     
     function test_VRFCallback() public {
@@ -211,7 +219,9 @@ contract GameEngineTest is Test, ERC1155Holder {
         uint256[] memory randomWords = new uint256[](1);
         randomWords[0] = 12345;
         
-        // Request ID is always 1 for first request in VRFCoordinatorV2Mock
+        vm.expectEmit(true, true, false, true);
+        emit CombatResult(INITIAL_MONSTER_ID, player, 10, true);
+        
         vrfCoordinator.fulfillRandomWordsWithOverride(1, address(gameEngine), randomWords);
     }
 }
