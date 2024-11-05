@@ -1,5 +1,10 @@
 ## Foundry
 
+chmod +x deploy.sh
+./deploy.sh testnet  # For testnet deployment
+# or
+./deploy.sh mainnet  # For mainnet deployment
+
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
 Foundry consists of:
