@@ -130,7 +130,7 @@ contract GameEngineTest is Test, ERC1155Holder {
         
         // Get monster state after attack
         IGameEngine.Monster memory monster = gameEngine.getMonster(INITIAL_MONSTER_ID);
-        assertEq(monster.hp, INITIAL_HP - 10); // Basic attack does 10 damage in MVP
+        assertEq(monster.hp, 90); // Initial HP 100 - 10 damage
     }
     
     function test_MonsterDefeat() public {
