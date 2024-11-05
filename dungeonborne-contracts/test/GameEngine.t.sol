@@ -118,19 +118,32 @@ contract GameEngineTest is Test, ERC1155Holder {
             RuneStone.ElementType.FIRE,
             RuneStone.PowerLevel.COMMON
         );
+
+        // Log initial balances
+        console.log("Player RuneStone balance before attack:", runeStone.balanceOf(player, tokenId));
+        console.log("GameEngine RuneStone balance before attack:", runeStone.balanceOf(address(gameEngine), tokenId));
         
         // Attack monster as player
         vm.prank(player);
         gameEngine.attack(INITIAL_MONSTER_ID, tokenId);
+
+        // Log balances after attack request
+        console.log("Player RuneStone balance after attack:", runeStone.balanceOf(player, tokenId));
+        console.log("GameEngine RuneStone balance after attack:", runeStone.balanceOf(address(gameEngine), tokenId));
 
         // Process VRF callback
         uint256[] memory randomWords = new uint256[](1);
         randomWords[0] = 12345;
         vrfCoordinator.fulfillRandomWordsWithOverride(1, address(gameEngine), randomWords);
         
+        // Log final balances
+        console.log("Player RuneStone balance after VRF:", runeStone.balanceOf(player, tokenId));
+        console.log("GameEngine RuneStone balance after VRF:", runeStone.balanceOf(address(gameEngine), tokenId));
+
         // Get monster state after attack
         IGameEngine.Monster memory monster = gameEngine.getMonster(INITIAL_MONSTER_ID);
-        assertEq(monster.hp, 90); // Initial HP 100 - 10 damage
+        console.log("Monster HP after attack:", monster.hp);
+        assertEq(monster.hp, 90, "Monster HP should be reduced by 10"); // Initial HP 100 - 10 damage
     }
     
     function test_MonsterDefeat() public {
