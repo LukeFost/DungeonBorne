@@ -41,7 +41,7 @@ contract GameEngineTest is Test {
 
         gameEngine.spawnMonster("Goblin", 1, stats, 100, 100, 0);
 
-        (uint256 id, string memory name, uint8 level, , , bool isActive, , ) = gameEngine.monsters(1);
+        (uint256 id, string memory name, uint8 level, IGameEngine.Stats memory stats, IGameEngine.Position memory pos, bool isActive, uint256 spawnTime, uint256 lastInteraction) = gameEngine.monsters(1);
 
         assertEq(id, 1);
         assertEq(name, "Goblin");
@@ -101,15 +101,15 @@ contract GameEngineTest is Test {
     function testCreateQuest() public {
         vm.startPrank(owner);
 
-        uint256;
+        uint256[] memory requiredMonsters = new uint256[](1);
         requiredMonsters[0] = 1;
 
-        uint256;
+        uint256[] memory requiredItems = new uint256[](0);
 
-        uint256;
+        uint256[] memory rewardRuneIds = new uint256[](1);
         rewardRuneIds[0] = 1;
 
-        uint256;
+        uint256[] memory rewardAmounts = new uint256[](1);
         rewardAmounts[0] = 100;
 
         gameEngine.createQuest(
@@ -141,7 +141,7 @@ contract GameEngineTest is Test {
 
         gameEngine.initiateCombat(1, 1);
 
-        (uint256 id, uint256 playerId, uint256 monsterId, , , bool playerTurn, bool isActive, ) = gameEngine.combats(1);
+        (uint256 id, uint256 playerId, uint256 monsterId, uint8 playerHp, uint8 monsterHp, bool playerTurn, bool isActive, uint256 lastAction) = gameEngine.combats(1);
 
         assertEq(id, 1);
         assertEq(playerId, 1);

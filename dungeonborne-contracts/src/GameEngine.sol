@@ -69,6 +69,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     }
 
     // Game state
+    mapping(address => uint256) public addressToPlayerId; // Mapping from address to playerId
     uint256 public constant GRID_SIZE = 1000;
     uint256 public constant COMBAT_TIMEOUT = 30 minutes;
     uint256 public constant MONSTER_DESPAWN_TIME = 1 days;
