@@ -15,7 +15,7 @@ import "./RuneStone.sol";
 import "./GameItems.sol";
 import "./IGameEngine.sol";
 
-contract GameEngine is Ownable, ReentrancyGuard, Pausable, IGameEngine {
+contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     // Contract references
     RuneStonesOfPower public immutable runeStones;
     GameItems public immutable gameItems;

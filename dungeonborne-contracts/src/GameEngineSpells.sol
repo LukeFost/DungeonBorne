@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "./GameEngine.sol";
 import "./IGameEngine.sol";
 
-contract GameEngineSpells is GameEngine {
+contract GameEngineSpells is GameEngine, IGameEngine {
     constructor(
         address _runeStones,
         address _gameItems
@@ -80,10 +80,10 @@ contract GameEngineSpells is GameEngine {
     mapping(uint256 => Ability) public abilities;
     
     // Player spell and ability management
-    mapping(uint256 => mapping(uint256 => bool)) public playerSpells; // playerId => spellId => owned
-    mapping(uint256 => mapping(uint256 => bool)) public playerAbilities; // playerId => abilityId => owned
-    mapping(uint256 => mapping(uint256 => uint256)) public spellCooldowns; // playerId => spellId => timestamp
-    mapping(uint256 => mapping(uint256 => uint256)) public abilityCooldowns; // playerId => abilityId => timestamp
+    mapping(address => mapping(uint256 => bool)) public playerSpells; // player address => spellId => owned
+    mapping(address => mapping(uint256 => bool)) public playerAbilities; // player address => abilityId => owned
+    mapping(address => mapping(uint256 => uint256)) public spellCooldowns; // player address => spellId => timestamp
+    mapping(address => mapping(uint256 => uint256)) public abilityCooldowns; // player address => abilityId => timestamp
     
     // Status effects
     mapping(uint256 => mapping(StatusEffect => uint256)) public statusEffects; // targetId => effect => expiry
