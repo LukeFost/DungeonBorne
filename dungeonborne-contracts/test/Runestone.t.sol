@@ -52,39 +52,33 @@ contract RuneStoneTest is Test, ERC1155Holder {
         vm.expectEmit(true, true, true, true);
         emit RuneStoneCreated(0, RuneStone.ElementType.FIRE, RuneStone.PowerLevel.COMMON);
         
-        try runeStone.mint(
+        uint256 tokenId = runeStone.mint(
             to,
             RuneStone.ElementType.FIRE,
             RuneStone.PowerLevel.COMMON
-        ) returns (uint256 tokenId) {
-            console.log("Mint succeeded with tokenId:", tokenId);
+        );
         
-            // Verify the mint
-            uint256 newBalance = runeStone.balanceOf(to, tokenId);
-            console.log("Post-mint balance:", newBalance);
-            assertEq(newBalance, 1, "Balance should be 1 after mint");
+        console.log("Mint succeeded with tokenId:", tokenId);
+    
+        // Verify the mint
+        uint256 newBalance = runeStone.balanceOf(to, tokenId);
+        console.log("Post-mint balance:", newBalance);
+        assertEq(newBalance, 1, "Balance should be 1 after mint");
+    
+        // Check token details
+        (
+            RuneStone.ElementType element,
+            RuneStone.PowerLevel power,
+            bool isActive
+        ) = runeStone.getRuneStoneDetails(tokenId);
         
-            // Check token details
-            (
-                RuneStone.ElementType element,
-                RuneStone.PowerLevel power,
-                bool isActive
-            ) = runeStone.getRuneStoneDetails(tokenId);
-            
-            console.log("Token details - Element:", uint256(element));
-            console.log("Token details - Power:", uint256(power));
-            console.log("Token details - Active:", isActive);
-            
-            assertEq(uint256(element), uint256(RuneStone.ElementType.FIRE), "Wrong element type");
-            assertEq(uint256(power), uint256(RuneStone.PowerLevel.COMMON), "Wrong power level");
-            assertTrue(isActive, "Token should be active");
-        } catch Error(string memory reason) {
-            console.log("Mint failed with reason:", reason);
-            fail(); // Fail test with error message already logged
-        } catch (bytes memory) {
-            console.log("Mint failed with low-level error");
-            fail(); // Fail test with error message already logged
-        }
+        console.log("Token details - Element:", uint256(element));
+        console.log("Token details - Power:", uint256(power));
+        console.log("Token details - Active:", isActive);
+        
+        assertEq(uint256(element), uint256(RuneStone.ElementType.FIRE), "Wrong element type");
+        assertEq(uint256(power), uint256(RuneStone.PowerLevel.COMMON), "Wrong power level");
+        assertTrue(isActive, "Token should be active");
     }
     
     function test_InitialState() public view {
