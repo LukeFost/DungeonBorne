@@ -1,34 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-// LinkWell Nodes VRF Interface
-interface LinkWellNodesClient {
-    function oracleRequest(
-        address _sender,
-        uint256 _payment,
-        bytes32 _specId,
-        address _callbackAddress,
-        bytes4 _callbackFunctionId,
-        uint256 _nonce,
-        uint256 _dataVersion,
-        bytes calldata _data
-    ) external;
-
-    function cancelOracleRequest(
-        bytes32 _requestId,
-        uint256 _payment,
-        bytes4 _callbackFunctionId,
-        uint256 _expiration
-    ) external;
-}
-
-struct LinkWellNodesRequest {
-    address callbackAddress;
-    bytes4 callbackFunctionId;
-}
+import "../lib/openzeppelin-contracts//contracts/access/Ownable.sol";
+import "../lib/openzeppelin-contracts//contracts/utils/ReentrancyGuard.sol";
+import "../lib/openzeppelin-contracts//contracts/utils/Pausable.sol";
 import "./RuneStone.sol";
 import "./GameItems.sol";
 
@@ -41,9 +16,6 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     // VRF configuration
     bytes32 private jobId;
     uint256 private fee;
-    LinkWellNodesClient private oracle;
-    uint256 private nonce;
-    mapping(bytes32 => LinkWellNodesRequest) private requests;
 
     // Game structures
     struct Stats {
@@ -141,12 +113,14 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     event DiceRollCompleted(uint256 indexed requestId, uint256 result);
 
     constructor(
+        address _link,
         address _oracle,
         address _runeStones,
         address _gameItems,
         bytes32 _jobId
     ) Ownable(msg.sender) {
-        oracle = LinkWellNodesClient(_oracle);
+        setChainlinkToken(_link);
+        setChainlinkOracle(_oracle);
         runeStones = RuneStonesOfPower(_runeStones);
         gameItems = GameItems(_gameItems);
         jobId = _jobId;
@@ -271,35 +245,21 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
 
     // VRF Functions
     function requestDiceRoll(uint256 combatId) internal returns (bytes32 requestId) {
-        LinkWellNodesRequest memory req;
-        req.callbackAddress = address(this);
-        req.callbackFunctionId = this.fulfillRandomWords.selector;
-
-        bytes memory data = abi.encode(1, 20, "your_contact_info");
-        requestId = keccak256(abi.encodePacked(this, nonce++));
-        requests[requestId] = req;
-
-        oracle.oracleRequest(
-            address(this),
-            fee,
-            jobId,
-            address(this),
-            this.fulfillRandomWords.selector,
-            nonce,
-            1,
-            data
-        );
-
+        Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfillRandomWords.selector);
+        
+        req.addUint("minVal", 1);
+        req.addUint("maxVal", 20);
+        req.add("contact", "your_contact_info");
+        
+        requestId = sendChainlinkRequest(req, fee);
+        
         rollRequests[requestId] = msg.sender;
         combatRolls[requestId] = combatId;
         
         emit DiceRollRequested(requestId, combatId);
     }
 
-    function fulfillRandomWords(bytes32 _requestId, uint256 _randomNumber) public {
-        require(msg.sender == address(oracle), "Only LinkWellNodes can fulfill");
-        delete requests[_requestId];
-
+    function fulfillRandomWords(bytes32 _requestId, uint256 _randomNumber) public recordChainlinkFulfillment(_requestId) {
         uint256 combatId = combatRolls[_requestId];
         Combat storage combat = combats[combatId];
         require(combat.isActive, "GameEngine: Combat not active");
