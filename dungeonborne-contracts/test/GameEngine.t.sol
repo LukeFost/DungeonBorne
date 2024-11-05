@@ -94,6 +94,8 @@ contract GameEngineTest is Test {
         assertEq(id, 1);
         assertEq(name, "Hero1");
         assertTrue(isActive);
+        assertEq(experience, 0);
+        assertEq(level, 1);
 
         vm.stopPrank();
     }
@@ -125,6 +127,9 @@ contract GameEngineTest is Test {
 
         assertEq(id, 1);
         assertEq(name, "Slay the Goblin");
+        assertEq(description, "Kill the goblin terrorizing the village");
+        assertEq(reqMonsters.length, 1);
+        assertEq(reqMonsters[0], 1);
         assertTrue(isActive);
 
         vm.stopPrank();
