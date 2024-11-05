@@ -91,6 +91,16 @@ interface IGameEngine {
         bool isActive;
     }
 
+    struct Combat {
+        uint256 id;
+        uint256 playerId;
+        uint256 monsterId;
+        bool playerTurn;
+        bool isActive;
+        uint256 lastAction;
+        uint256 initiatedAt;
+    }
+
     struct GameState {
         uint256 playerId;
         Stats playerStats;
