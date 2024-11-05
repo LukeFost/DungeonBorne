@@ -4,20 +4,23 @@ pragma solidity ^0.8.20;
 import "../lib/openzeppelin-contracts//contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts//contracts/utils/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts//contracts/utils/Pausable.sol";
-import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
-import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
+interface LinkWellNodesClient {
+    function requestRandomness(
+        bytes32 _jobId,
+        uint256 _fee,
+        uint256 _seed
+    ) external returns (bytes32 requestId);
+}
 import "./RuneStone.sol";
 import "./GameItems.sol";
 
-contract GameEngine is Ownable, ReentrancyGuard, Pausable, ChainlinkClient, ConfirmedOwner {
-    using Chainlink for Chainlink.Request;
-
+contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     // Contract references
     RuneStonesOfPower public immutable runeStones;
     GameItems public immutable gameItems;
 
     // VRF configuration
-    address private oracle;
+    LinkWellNodesClient private oracle;
     bytes32 private jobId;
     uint256 private fee;
 
@@ -119,14 +122,12 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, ChainlinkClient, Conf
     constructor(
         address _runeStones,
         address _gameItems
-    ) Ownable(msg.sender) ConfirmedOwner(msg.sender) {
-        oracle = 0x14bc7F6Da6cA3E072793c185e01a76E62341CC61;
+    ) Ownable(msg.sender) {
+        oracle = LinkWellNodesClient(0x14bc7F6Da6cA3E072793c185e01a76E62341CC61);
         runeStones = RuneStonesOfPower(_runeStones);
         gameItems = GameItems(_gameItems);
         jobId = "92b7c5a0307545d9ad032f00523605a0";
         fee = 0; // 0 LINK
-
-        setChainlinkToken(0xE4aB69C077896252FAFBD49EFD26B5D171A32410);
     }
 
     // Monster Management Functions
@@ -247,26 +248,22 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, ChainlinkClient, Conf
 
     // VRF Functions
     function requestDiceRoll(uint256 combatId) internal returns (bytes32 requestId) {
-        Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfillRandomness.selector);
-        req.addUint("minVal", 1);
-        req.addUint("maxVal", 20);
-        req.add("contact", ""); // Optional contact info
-
-        requestId = sendChainlinkRequestTo(oracle, req, fee);
+        uint256 seed = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender)));
+        
+        requestId = oracle.requestRandomness(jobId, fee, seed);
         
         rollRequests[requestId] = msg.sender;
         combatRolls[requestId] = combatId;
-        
         emit DiceRollRequested(requestId, combatId);
     }
 
-    function fulfillRandomness(bytes32 _requestId, uint256 _randomness) public recordChainlinkFulfillment(_requestId) {
+    function fulfillRandomness(bytes32 _requestId, uint256 _randomness) external {
         require(msg.sender == address(oracle), "Only LinkWellNodes can fulfill");
         uint256 combatId = combatRolls[_requestId];
         Combat storage combat = combats[combatId];
         require(combat.isActive, "GameEngine: Combat not active");
 
-        uint256 roll = _randomness; // The returned value is already between 1 and 20
+        uint256 roll = (_randomness % 20) + 1; // Ensure the roll is between 1 and 20
         processCombatRoll(combatId, roll);
         
         emit DiceRollCompleted(_requestId, roll);
