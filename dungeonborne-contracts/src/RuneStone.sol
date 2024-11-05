@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "../lib/openzeppelin-contracts//contracts/token/ERC1155/ERC1155.sol";
+import "../lib/openzeppelin-contracts//contracts/access/Ownable.sol";
+import "../lib/openzeppelin-contracts//contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
+import "../lib/openzeppelin-contracts//contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
     using Strings for uint256;
@@ -34,7 +34,7 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
 
     // Modifier for authorized minters
     modifier onlyMinter() {
-        require(authorizedMinters[msg.sender] || owner() == msg.sender, "Not authorized to mint");
+        require(authorizedMinters[msg.sender] || owner() == msg.sender, "RuneStonesOfPower: Not authorized to mint");
         _;
     }
 
@@ -50,9 +50,9 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
         uint8 power,
         uint8 element
     ) external onlyOwner {
-        require(!runeStones[tokenId].isActive, "Rune stone already exists");
-        require(element <= 3, "Invalid element type");
-        require(bytes(name).length > 0, "Name cannot be empty");
+        require(!runeStones[tokenId].isActive, "RuneStonesOfPower: Rune stone already exists");
+        require(element <= 3, "RuneStonesOfPower: Invalid element type");
+        require(bytes(name).length > 0, "RuneStonesOfPower: Name cannot be empty");
         
         runeStones[tokenId] = RuneStone({
             name: name,
@@ -71,7 +71,7 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
         uint256 amount,
         bytes memory data
     ) external onlyMinter {
-        require(runeStones[tokenId].isActive, "Rune stone does not exist");
+        require(runeStones[tokenId].isActive, "RuneStonesOfPower: Rune stone does not exist");
         _mint(to, tokenId, amount, data);
     }
 
@@ -83,19 +83,19 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
         bytes memory data
     ) external onlyMinter {
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            require(runeStones[tokenIds[i]].isActive, "Rune stone does not exist");
+            require(runeStones[tokenIds[i]].isActive, "RuneStonesOfPower: Rune stone does not exist");
         }
         _mintBatch(to, tokenIds, amounts, data);
     }
 
     // View functions
     function getRuneStone(uint256 tokenId) external view returns (RuneStone memory) {
-        require(runeStones[tokenId].isActive, "Rune stone does not exist");
+        require(runeStones[tokenId].isActive, "RuneStonesOfPower: Rune stone does not exist");
         return runeStones[tokenId];
     }
 
     function uri(uint256 tokenId) public view virtual override returns (string memory) {
-        require(runeStones[tokenId].isActive, "URI query for nonexistent token");
+        require(runeStones[tokenId].isActive, "RuneStonesOfPower: URI query for nonexistent token");
         return string(abi.encodePacked(super.uri(tokenId), tokenId.toString(), ".json"));
     }
 
