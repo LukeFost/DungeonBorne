@@ -25,18 +25,6 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     uint256 private fee;
 
     // Game structures
-    struct Stats {
-        uint8 hp;
-        uint8 maxHp;
-        uint8 ac;
-        uint8 str;
-        uint8 dex;
-        uint8 con;
-        uint8 intel;
-        uint8 wis;
-        uint8 cha;
-    }
-
     struct Position {
         uint16 x;
         uint16 y;
@@ -62,6 +50,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         bool isActive;
         uint256 experience;
         uint256 lastAction;
+        uint8 level;
     }
 
     struct Quest {
@@ -105,8 +94,8 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     uint256 public nextCombatId = 1;
 
     // VRF request mappings
-    mapping(uint256 => address) public rollRequests; // requestId => player
-    mapping(uint256 => uint256) public combatRolls; // requestId => combatId
+    mapping(bytes32 => address) public rollRequests; // requestId => player
+    mapping(bytes32 => uint256) public combatRolls; // requestId => combatId
 
     // Events
     event MonsterSpawned(uint256 indexed id, string name, uint8 level, uint16 x, uint16 y);
@@ -116,8 +105,8 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     event CombatStarted(uint256 indexed combatId, uint256 indexed playerId, uint256 indexed monsterId);
     event CombatAction(uint256 indexed combatId, bool isPlayerAction, uint256 roll, uint256 damage);
     event CombatEnded(uint256 indexed combatId, bool playerWon);
-    event DiceRollRequested(uint256 indexed requestId, uint256 indexed combatId);
-    event DiceRollCompleted(uint256 indexed requestId, uint256 result);
+    event DiceRollRequested(bytes32 indexed requestId, uint256 indexed combatId);
+    event DiceRollCompleted(bytes32 indexed requestId, uint256 result);
 
     constructor(
         address _runeStones,
@@ -240,7 +229,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         require(block.timestamp - combat.lastAction <= COMBAT_TIMEOUT, "GameEngine: Combat timeout");
 
         if (combat.playerTurn) {
-            require(msg.sender == address(players[combat.playerId].id), "GameEngine: Not player's turn");
+            require(msg.sender == players[combat.playerId].id, "GameEngine: Not player's turn");
         }
 
         requestDiceRoll(combatId);
