@@ -26,7 +26,7 @@ contract GameEngineTest is Test {
     function testSpawnMonster() public {
         vm.startPrank(owner);
         
-        GameEngine.Stats memory stats = GameEngine.Stats({
+        IGameEngine.Stats memory stats = IGameEngine.Stats({
             hp: 10,
             maxHp: 10,
             ac: 12,

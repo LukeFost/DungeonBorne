@@ -39,6 +39,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, IGameEngine {
 
     struct Player {
         uint256 id;
+        address addr; // Add player address
         string name;
         Stats stats;
         Position pos;
@@ -155,12 +156,14 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, IGameEngine {
         
         players[playerId] = Player({
             id: playerId,
+            addr: msg.sender,
             name: name,
             stats: stats,
             pos: Position({x: 0, y: 0, facing: 0}),
             isActive: true,
             experience: 0,
-            lastAction: block.timestamp
+            lastAction: block.timestamp,
+            level: 1
         });
 
         emit PlayerRegistered(playerId, name);
@@ -224,7 +227,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, IGameEngine {
         require(block.timestamp - combat.lastAction <= COMBAT_TIMEOUT, "GameEngine: Combat timeout");
 
         if (combat.playerTurn) {
-            require(msg.sender == players[combat.playerId].id, "GameEngine: Not player's turn");
+            require(msg.sender == players[combat.playerId].addr, "GameEngine: Not player's turn");
         }
 
         requestDiceRoll(combatId);

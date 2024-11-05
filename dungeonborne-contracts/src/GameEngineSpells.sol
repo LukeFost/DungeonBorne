@@ -5,6 +5,76 @@ import "./GameEngine.sol";
 import "./IGameEngine.sol";
 
 contract GameEngineSpells is GameEngine {
+    constructor(
+        address _runeStones,
+        address _gameItems
+    ) GameEngine(_runeStones, _gameItems) {}
+
+    // Interface implementations
+    function getSpell(uint256 spellId) external view returns (Spell memory) {
+        return spells[spellId];
+    }
+
+    function getAbility(uint256 abilityId) external view returns (Ability memory) {
+        return abilities[abilityId];
+    }
+
+    function getActiveEffects(uint256 playerId) external view returns (StatusEffect[] memory) {
+        StatusEffect[] memory effects = new StatusEffect[](10);
+        uint256 count = 0;
+        for (uint8 i = 0; i < 10; i++) {
+            StatusEffect effect = StatusEffect(i);
+            if (statusEffects[playerId][effect] > block.timestamp) {
+                effects[count++] = effect;
+            }
+        }
+        return effects;
+    }
+
+    function getCooldowns(uint256 playerId) external view returns (uint256[] memory spellIds, uint256[] memory timestamps) {
+        spellIds = new uint256[](100);
+        timestamps = new uint256[](100);
+        uint256 count = 0;
+        for (uint256 i = 0; i < 100; i++) {
+            if (spellCooldowns[playerId][i] > 0) {
+                spellIds[count] = i;
+                timestamps[count] = spellCooldowns[playerId][i];
+                count++;
+            }
+        }
+        return (spellIds, timestamps);
+    }
+
+    function getQuestProgress(uint256 questId, uint256 playerId) external view returns (bool[] memory completed) {
+        Quest storage quest = quests[questId];
+        completed = new bool[](quest.requiredMonsters.length);
+        for (uint256 i = 0; i < quest.requiredMonsters.length; i++) {
+            completed[i] = questProgress[questId][quest.requiredMonsters[i]];
+        }
+        return completed;
+    }
+
+    function getPlayerSpells(uint256 playerId) external view returns (uint256[] memory spellIds) {
+        spellIds = new uint256[](100);
+        uint256 count = 0;
+        for (uint256 i = 0; i < 100; i++) {
+            if (playerSpells[playerId][i]) {
+                spellIds[count++] = i;
+            }
+        }
+        return spellIds;
+    }
+
+    function getPlayerAbilities(uint256 playerId) external view returns (uint256[] memory abilityIds) {
+        abilityIds = new uint256[](100);
+        uint256 count = 0;
+        for (uint256 i = 0; i < 100; i++) {
+            if (playerAbilities[playerId][i]) {
+                abilityIds[count++] = i;
+            }
+        }
+        return abilityIds;
+    }
     // Spell and Ability storage
     mapping(uint256 => Spell) public spells;
     mapping(uint256 => Ability) public abilities;
