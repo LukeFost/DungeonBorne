@@ -8,9 +8,6 @@ import "../src/GameItems.sol";
 import "../src/IGameEngine.sol";
 
 contract GameEngineTest is Test {
-    using { GameEngine.Quest } for GameEngine;
-
-contract GameEngineTest is Test {
     GameEngine public gameEngine;
     RuneStonesOfPower public runeStones;
     GameItems public gameItems;
