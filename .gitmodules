@@ -4,3 +4,6 @@
 [submodule "dungeonborne-contracts/lib/openzeppelin-contracts"]
 	path = dungeonborne-contracts/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "dungeonborne-contracts/lib/chainlink"]
+	path = dungeonborne-contracts/lib/chainlink
+	url = https://github.com/smartcontractkit/chainlink
