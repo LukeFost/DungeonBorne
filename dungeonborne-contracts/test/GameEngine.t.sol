@@ -154,14 +154,23 @@ contract GameEngineTest is Test {
             rewardAmounts
         );
 
-        Quest memory quest = gameEngine.quests(1);
+        (
+            uint256 id,
+            string memory name,
+            string memory description,
+            uint256[] memory requiredMonsters,
+            uint256[] memory requiredItems,
+            uint256[] memory rewardRuneIds,
+            uint256[] memory rewardAmounts,
+            bool isActive
+        ) = gameEngine.quests(1);
 
-        assertEq(quest.id, 1);
-        assertEq(quest.name, "Slay the Goblin");
-        assertEq(quest.description, "Kill the goblin terrorizing the village");
-        assertEq(quest.requiredMonsters.length, 1);
-        assertEq(quest.requiredMonsters[0], 1);
-        assertTrue(quest.isActive);
+        assertEq(id, 1);
+        assertEq(name, "Slay the Goblin");
+        assertEq(description, "Kill the goblin terrorizing the village");
+        assertEq(requiredMonsters.length, 1);
+        assertEq(requiredMonsters[0], 1);
+        assertTrue(isActive);
 
         vm.stopPrank();
     }
