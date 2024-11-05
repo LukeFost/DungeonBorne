@@ -34,7 +34,7 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
 
     // Modifier for authorized minters
     modifier onlyMinter() {
-        require(authorizedMinters[msg.sender] || owner() == msg.sender, "RuneStonesOfPower: Not authorized to mint");
+        require(authorizedMinters[msg.sender] || msg.sender == owner(), "RuneStonesOfPower: Not authorized to mint");
         _;
     }
 
