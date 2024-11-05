@@ -277,7 +277,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     }
 
     function endCombat(uint256 combatId, bool playerWon) internal {
-        Combat storage combat = combats[combatId];
+        IGameEngine.Combat storage combat = combats[combatId];
         combat.isActive = false;
 
         if (playerWon) {
