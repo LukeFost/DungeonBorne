@@ -3,108 +3,145 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IRuneStone.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract RuneStone is ERC1155, Ownable {
-    // State variables
-    mapping(uint256 => ElementType) private _elements;
-    mapping(uint256 => PowerLevel) private _powerLevels;
-    mapping(uint256 => bool) private _active;
-    uint256 private _tokenIds;
+    using Strings for uint256;
 
-    // Constants for URI construction
-    string private constant BASE_URI = "https://game-uri.com/api/token/";
+    // Enums
+    enum ElementType { FIRE, WATER, EARTH, AIR, LIGHTNING }
+    enum PowerLevel { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
+
+    // State variables
+    uint256 private _currentTokenId;
     
-    constructor(address initialOwner) 
-        ERC1155(string(abi.encodePacked(BASE_URI, "{id}.json")))
-        Ownable(initialOwner)  // Explicitly set the initial owner
-    {
-        require(initialOwner != address(0), "RuneStone: zero address owner");
+    // Token mappings
+    mapping(uint256 => RuneStoneDetails) private _runeStones;
+    
+    // Structs
+    struct RuneStoneDetails {
+        ElementType element;
+        PowerLevel power;
+        bool isActive;
     }
-    
+
+    // Events
+    event RuneStoneCreated(uint256 indexed tokenId, ElementType element, PowerLevel power);
+    event RuneStoneUsed(uint256 indexed tokenId, address indexed user);
+
+    constructor(address initialOwner) 
+        ERC1155("https://game-uri.com/api/token/{id}.json") 
+        Ownable(initialOwner) 
+    {}
+
+    /**
+     * @notice Mint a new RuneStone token
+     * @param to Address to mint the token to
+     * @param element Element type of the RuneStone
+     * @param power Power level of the RuneStone
+     * @return tokenId The ID of the newly minted token
+     */
     function mint(
         address to,
         ElementType element,
         PowerLevel power
     ) external onlyOwner returns (uint256) {
         require(to != address(0), "RuneStone: mint to zero address");
+
+        uint256 tokenId = _currentTokenId++;
         
-        uint256 newTokenId = _tokenIds++;
-        _elements[newTokenId] = element;
-        _powerLevels[newTokenId] = power;
-        _active[newTokenId] = true;
+        _runeStones[tokenId] = RuneStoneDetails({
+            element: element,
+            power: power,
+            isActive: true
+        });
+
+        _mint(to, tokenId, 1, "");
+
+        emit RuneStoneCreated(tokenId, element, power);
         
-        _mint(to, newTokenId, 1, "");
-        
-        emit RuneStoneCreated(newTokenId, element, power);
-        return newTokenId;
+        return tokenId;
     }
-    
+
+    /**
+     * @notice Burn a RuneStone token
+     * @param tokenId ID of the token to burn
+     */
     function burn(uint256 tokenId) external {
         require(_exists(tokenId), "RuneStone: Invalid token ID");
-        require(_active[tokenId], "RuneStone: Token not active");
+        require(_runeStones[tokenId].isActive, "RuneStone: Token not active");
         require(balanceOf(msg.sender, tokenId) > 0, "RuneStone: Not token owner");
-        
+
         _burn(msg.sender, tokenId, 1);
-        _active[tokenId] = false;
-        
+        _runeStones[tokenId].isActive = false;
+
         emit RuneStoneUsed(tokenId, msg.sender);
     }
-    
-    function getRuneStoneDetails(uint256 tokenId) external view returns (
-        ElementType element,
-        PowerLevel power,
-        bool isActive
-    ) {
-        require(_exists(tokenId), "RuneStone: Token does not exist");
-        return (
-            _elements[tokenId],
-            _powerLevels[tokenId],
-            _active[tokenId]
-        );
-    }
-    
-    function _exists(uint256 tokenId) internal view returns (bool) {
-        return tokenId < _tokenIds;
+
+    /**
+     * @notice Get the details of a RuneStone
+     * @param tokenId ID of the token to query
+     * @return element The element type of the RuneStone
+     * @return power The power level of the RuneStone
+     * @return isActive Whether the RuneStone is still active
+     */
+    function getRuneStoneDetails(uint256 tokenId) 
+        external 
+        view 
+        returns (
+            ElementType element,
+            PowerLevel power,
+            bool isActive
+        ) 
+    {
+        require(_exists(tokenId), "RuneStone: Invalid token ID");
+        RuneStoneDetails memory details = _runeStones[tokenId];
+        return (details.element, details.power, details.isActive);
     }
 
-    // Optional: Override uri function if you need dynamic URI generation
+    /**
+     * @notice Override the URI function to check for token existence
+     * @param tokenId ID of the token to get URI for
+     */
     function uri(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "RuneStone: URI query for nonexistent token");
-        return string(abi.encodePacked(BASE_URI, _toString(tokenId), ".json"));
+        return string(
+            abi.encodePacked(
+                "https://game-uri.com/api/token/",
+                _toString(tokenId),
+                ".json"
+            )
+        );
     }
 
-    // Helper function to convert uint256 to string
+    /**
+     * @notice Check if a token exists
+     * @param tokenId ID of the token to check
+     */
+    function _exists(uint256 tokenId) internal view returns (bool) {
+        return tokenId < _currentTokenId;
+    }
+
+    /**
+     * @dev Internal function to convert a uint256 to its string representation
+     * @param value The uint256 to convert
+     */
     function _toString(uint256 value) internal pure returns (string memory) {
-        // Handle the case where value is 0
         if (value == 0) {
             return "0";
         }
-
-        // Find the number of digits
         uint256 temp = value;
         uint256 digits;
         while (temp != 0) {
             digits++;
             temp /= 10;
         }
-
-        // Create the string
         bytes memory buffer = new bytes(digits);
         while (value != 0) {
             digits -= 1;
             buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
             value /= 10;
         }
-
         return string(buffer);
     }
-
-    // Events (from IRuneStone)
-    event RuneStoneCreated(uint256 indexed tokenId, ElementType element, PowerLevel power);
-    event RuneStoneUsed(uint256 indexed tokenId, address indexed user);
-
-    // Enums (from IRuneStone)
-    enum ElementType { FIRE, WATER, EARTH, AIR, VOID }
-    enum PowerLevel { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
 }
