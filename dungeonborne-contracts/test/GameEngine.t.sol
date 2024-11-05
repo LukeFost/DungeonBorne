@@ -6,6 +6,7 @@ import "../src/GameEngine.sol";
 import "../src/RuneStone.sol";
 import "../src/GameItems.sol";
 import "../src/IGameEngine.sol";
+import "../src/IGameEngine.sol";
 
 contract GameEngineTest is Test {
     GameEngine public gameEngine;
@@ -154,7 +155,7 @@ contract GameEngineTest is Test {
             rewardAmounts
         );
 
-        Quest memory quest = gameEngine.quests(1);
+        IGameEngine.Quest memory quest = gameEngine.quests(1);
 
         assertEq(quest.id, 1);
         assertEq(quest.name, "Slay the Goblin");
