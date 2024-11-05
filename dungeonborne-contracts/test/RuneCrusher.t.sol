@@ -37,8 +37,7 @@ contract RuneCrusherTest is Test {
 
         // Create a test item and rune
         gameItems.createItem(1, "Test Item", GameItems.ItemType.WEAPON, GameItems.Rarity.COMMON, 1, new uint256[](1), new uint256[](1));
-        gameItems.createItem[1] = 1;
-        gameItems.createItem[1] = 100;
+        // Remove invalid createItem usage since it's handled in GameItems contract
         runeStones.createRuneStone(1, "Test Rune", 10, 0);
 
         // Mint some items to the player
