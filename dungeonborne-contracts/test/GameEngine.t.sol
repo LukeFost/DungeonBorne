@@ -74,7 +74,7 @@ contract GameEngineTest is Test {
     function testRegisterPlayer() public {
         vm.startPrank(player1);
         
-        GameEngine.Stats memory stats = GameEngine.Stats({
+        IGameEngine.Stats memory stats = IGameEngine.Stats({
             hp: 20,
             maxHp: 20,
             ac: 15,
