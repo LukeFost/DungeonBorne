@@ -240,7 +240,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         require(block.timestamp - combat.lastAction <= COMBAT_TIMEOUT, "GameEngine: Combat timeout");
 
         if (combat.playerTurn) {
-            require(msg.sender == ownerOf(combat.playerId), "GameEngine: Not player's turn");
+            require(msg.sender == address(players[combat.playerId].id), "GameEngine: Not player's turn");
         }
 
         requestDiceRoll(combatId);
