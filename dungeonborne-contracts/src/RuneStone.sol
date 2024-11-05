@@ -72,16 +72,9 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
         uint256 tokenId,
         uint256 amount,
         bytes memory data
-    ) external {
-        // Ensure only authorized minters can mint
-        if (!authorizedMinters[msg.sender] && msg.sender != owner()) {
-            revert("RuneStonesOfPower: Not authorized to mint");
-        }
-        
+    ) external onlyMinter {
         // Check if rune stone exists
-        if (!runeStones[tokenId].isActive) {
-            revert("RuneStonesOfPower: Rune stone does not exist");
-        }
+        require(runeStones[tokenId].isActive, "RuneStonesOfPower: Rune stone does not exist");
         
         _mint(to, tokenId, amount, data);
     }
@@ -92,17 +85,10 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
         uint256[] memory tokenIds,
         uint256[] memory amounts,
         bytes memory data
-    ) external {
-        // Ensure only authorized minters can mint
-        if (!authorizedMinters[msg.sender] && msg.sender != owner()) {
-            revert("RuneStonesOfPower: Not authorized to mint");
-        }
-        
+    ) external onlyMinter {
         // Check if all rune stones exist
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (!runeStones[tokenIds[i]].isActive) {
-                revert("RuneStonesOfPower: Rune stone does not exist");
-            }
+            require(runeStones[tokenIds[i]].isActive, "RuneStonesOfPower: Rune stone does not exist");
         }
         
         _mintBatch(to, tokenIds, amounts, data);
@@ -115,9 +101,7 @@ contract RuneStonesOfPower is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply {
     }
 
     function uri(uint256 tokenId) public view virtual override returns (string memory) {
-        if (!runeStones[tokenId].isActive) {
-            revert("RuneStonesOfPower: URI query for nonexistent token");
-        }
+        require(runeStones[tokenId].isActive, "RuneStonesOfPower: URI query for nonexistent token");
         return string(abi.encodePacked(super.uri(tokenId), tokenId.toString(), ".json"));
     }
 
