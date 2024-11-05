@@ -16,6 +16,7 @@ import "./GameItems.sol";
 import "./IGameEngine.sol";
 
 contract GameEngine is Ownable, ReentrancyGuard, Pausable {
+    using IGameEngine for IGameEngine.Stats;
     // Contract references
     RuneStonesOfPower public immutable runeStones;
     GameItems public immutable gameItems;
@@ -30,7 +31,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         uint256 id;
         string name;
         uint8 level;
-        Stats stats;
+        IGameEngine.Stats stats;
         Position pos;
         bool isActive;
         uint256 spawnTime;
@@ -41,7 +42,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         uint256 id;
         address addr; // Add player address
         string name;
-        Stats stats;
+        IGameEngine.Stats stats;
         Position pos;
         bool isActive;
         uint256 experience;
@@ -119,7 +120,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     function spawnMonster(
         string calldata name,
         uint8 level,
-        Stats calldata stats,
+        IGameEngine.Stats calldata stats,
         uint16 x,
         uint16 y,
         uint16 facing
@@ -146,7 +147,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     // Player Management Functions
     function registerPlayer(
         string calldata name,
-        Stats calldata stats
+        IGameEngine.Stats calldata stats
     ) external {
         require(!players[nextPlayerId].isActive, "GameEngine: Player ID taken");
         require(bytes(name).length > 0, "GameEngine: Name required");
