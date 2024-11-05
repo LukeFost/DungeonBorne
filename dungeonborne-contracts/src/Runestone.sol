@@ -71,7 +71,7 @@ contract RuneStone is ERC1155, Ownable {
         require(_exists(tokenId), "RuneStone: Invalid token ID");
         require(_runeStones[tokenId].isActive, "RuneStone: Token not active");
         require(balanceOf(msg.sender, tokenId) > 0 || isApprovedForAll(msg.sender, _msgSender()), 
-            "RuneStone: Not token owner or approved");
+            "RuneStone: Not token owner");
 
         _burn(msg.sender, tokenId, 1);
         _runeStones[tokenId].isActive = false;

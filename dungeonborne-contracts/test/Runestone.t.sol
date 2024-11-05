@@ -34,8 +34,8 @@ contract RuneStoneTest is Test, ERC1155Holder {
     }
     
     function testFuzz_MintToken(address to) public {
-        // Skip zero address and non-contract addresses that can't receive ERC1155
-        vm.assume(to != address(0));
+        // Skip zero address, precompiles, and non-contract addresses that can't receive ERC1155
+        vm.assume(to != address(0) && uint160(to) > 9);
         if (to.code.length == 0) {
             // Deploy a mock receiver and get its code
             MockERC1155Receiver mockReceiver = new MockERC1155Receiver();
