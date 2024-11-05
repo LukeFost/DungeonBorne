@@ -179,7 +179,7 @@ contract GameEngineTest is Test {
 
         gameEngine.initiateCombat(1, 1);
 
-        Combat memory combat = gameEngine.combats(1);
+        IGameEngine.Combat memory combat = gameEngine.combats(1);
 
         assertEq(combat.id, 1);
         assertEq(combat.playerId, 1);
