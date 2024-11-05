@@ -242,12 +242,12 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         if (combat.playerTurn) {
             if (roll >= monster.stats.ac) {
                 damage = calculateDamage(player.stats.str);
-                combat.monsterHp -= uint8(Math.min(damage, combat.monsterHp));
+                combat.monsterHp = uint8(Math.max(0, uint256(combat.monsterHp) - damage));
             }
         } else {
             if (roll >= player.stats.ac) {
                 damage = calculateDamage(monster.stats.str);
-                combat.playerHp -= uint8(Math.min(damage, combat.playerHp));
+                combat.playerHp = uint8(Math.max(0, uint256(combat.playerHp) - damage));
             }
         }
 

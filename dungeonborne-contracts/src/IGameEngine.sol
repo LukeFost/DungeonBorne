@@ -95,10 +95,12 @@ interface IGameEngine {
         uint256 id;
         uint256 playerId;
         uint256 monsterId;
+        uint8 playerHp;
+        uint8 monsterHp;
         bool playerTurn;
         bool isActive;
         uint256 lastAction;
-        uint256 initiatedAt;
+        uint256[] pendingRolls;
     }
 
     struct GameState {
