@@ -80,10 +80,10 @@ contract RuneStoneTest is Test, ERC1155Holder {
             assertTrue(isActive, "Token should be active");
         } catch Error(string memory reason) {
             console.log("Mint failed with reason:", reason);
-            fail(reason);
+            fail(); // Fail test with error message already logged
         } catch (bytes memory) {
             console.log("Mint failed with low-level error");
-            fail("Low-level error during mint");
+            fail(); // Fail test with error message already logged
         }
     }
     
