@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../lib/openzeppelin-contracts//contracts/access/Ownable.sol";
-import "../lib/openzeppelin-contracts//contracts/utils/ReentrancyGuard.sol";
-import "../lib/openzeppelin-contracts//contracts/utils/Pausable.sol";
-interface LinkWellNodesClient {
-    function requestRandomness(
-        bytes32 _jobId,
-        uint256 _fee,
-        uint256 _seed
-    ) external returns (bytes32 requestId);
-}
+import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "./RuneStone.sol";
 import "./GameItems.sol";
 import "./IGameEngine.sol";
 
 contract GameEngine is Ownable, ReentrancyGuard, Pausable {
+    using Math for uint256;
+
     // Contract references
     RuneStonesOfPower public immutable runeStones;
     GameItems public immutable gameItems;
@@ -31,7 +27,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         string name;
         uint8 level;
         IGameEngine.Stats stats;
-        Position pos;
+        IGameEngine.Position pos;
         bool isActive;
         uint256 spawnTime;
         uint256 lastInteraction;
@@ -39,10 +35,10 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
 
     struct Player {
         uint256 id;
-        address addr; // Add player address
+        address addr; // Player address
         string name;
         IGameEngine.Stats stats;
-        Position pos;
+        IGameEngine.Position pos;
         bool isActive;
         uint256 experience;
         uint256 lastAction;
@@ -76,13 +72,14 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     uint256 public constant GRID_SIZE = 1000;
     uint256 public constant COMBAT_TIMEOUT = 30 minutes;
     uint256 public constant MONSTER_DESPAWN_TIME = 1 days;
-    
+
     mapping(uint256 => Monster) public monsters;
     mapping(uint256 => Player) public players;
     mapping(uint256 => Quest) public quests;
     mapping(uint256 => Combat) public combats;
     mapping(uint256 => mapping(uint256 => bool)) public questProgress; // questId => monsterId => defeated
-    
+    mapping(address => uint256) public addressToPlayerId; // Mapping from address to playerId
+
     // Counters
     uint256 public nextMonsterId = 1;
     uint256 public nextPlayerId = 1;
@@ -107,7 +104,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     constructor(
         address _runeStones,
         address _gameItems
-    ) Ownable(msg.sender) {
+    ) Ownable() {
         oracle = LinkWellNodesClient(0x14bc7F6Da6cA3E072793c185e01a76E62341CC61);
         runeStones = RuneStonesOfPower(_runeStones);
         gameItems = GameItems(_gameItems);
@@ -128,13 +125,13 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         require(stats.hp > 0, "GameEngine: Invalid HP");
 
         uint256 monsterId = nextMonsterId++;
-        
+
         monsters[monsterId] = Monster({
             id: monsterId,
             name: name,
             level: level,
             stats: stats,
-            pos: Position({x: x, y: y, facing: facing}),
+            pos: IGameEngine.Position({x: x, y: y, facing: facing}),
             isActive: true,
             spawnTime: block.timestamp,
             lastInteraction: block.timestamp
@@ -148,18 +145,19 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         string calldata name,
         IGameEngine.Stats calldata stats
     ) external {
-        require(!players[nextPlayerId].isActive, "GameEngine: Player ID taken");
+        require(addressToPlayerId[msg.sender] == 0, "GameEngine: Address already registered");
         require(bytes(name).length > 0, "GameEngine: Name required");
         require(stats.hp > 0, "GameEngine: Invalid HP");
 
         uint256 playerId = nextPlayerId++;
-        
+        addressToPlayerId[msg.sender] = playerId;
+
         players[playerId] = Player({
             id: playerId,
             addr: msg.sender,
             name: name,
             stats: stats,
-            pos: Position({x: 0, y: 0, facing: 0}),
+            pos: IGameEngine.Position({x: 0, y: 0, facing: 0}),
             isActive: true,
             experience: 0,
             lastAction: block.timestamp,
@@ -182,7 +180,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
         require(rewardRuneIds.length == rewardAmounts.length, "GameEngine: Reward mismatch");
 
         uint256 questId = nextQuestId++;
-        
+
         quests[questId] = Quest({
             id: questId,
             name: name,
@@ -200,11 +198,12 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     // Combat Functions
     function initiateCombat(uint256 playerId, uint256 monsterId) external {
         require(players[playerId].isActive, "GameEngine: Invalid player");
+        require(players[playerId].addr == msg.sender, "GameEngine: Not your player");
         require(monsters[monsterId].isActive, "GameEngine: Invalid monster");
         require(!isPlayerInCombat(playerId), "GameEngine: Already in combat");
 
         uint256 combatId = nextCombatId++;
-        
+
         combats[combatId] = Combat({
             id: combatId,
             playerId: playerId,
@@ -214,7 +213,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
             playerTurn: true,
             isActive: true,
             lastAction: block.timestamp,
-            pendingRolls: new uint256[](0)
+            pendingRolls: new uint256
         });
 
         emit CombatStarted(combatId, playerId, monsterId);
@@ -236,9 +235,9 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     // VRF Functions
     function requestDiceRoll(uint256 combatId) internal returns (bytes32 requestId) {
         uint256 seed = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender)));
-        
+
         requestId = oracle.requestRandomness(jobId, fee, seed);
-        
+
         rollRequests[requestId] = msg.sender;
         combatRolls[requestId] = combatId;
         emit DiceRollRequested(requestId, combatId);
@@ -252,7 +251,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
 
         uint256 roll = (_randomness % 20) + 1; // Ensure the roll is between 1 and 20
         processCombatRoll(combatId, roll);
-        
+
         emit DiceRollCompleted(_requestId, roll);
     }
 
@@ -310,7 +309,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
             for (uint256 i = 1; i < nextQuestId; i++) {
                 Quest storage quest = quests[i];
                 if (!quest.isActive) continue;
-                
+
                 for (uint256 j = 0; j < quest.requiredMonsters.length; j++) {
                     if (quest.requiredMonsters[j] == monsterId) {
                         questProgress[i][monsterId] = true;
@@ -344,4 +343,13 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     function unpause() external onlyOwner {
         _unpause();
     }
+}
+
+// Dummy interface for LinkWellNodesClient
+interface LinkWellNodesClient {
+    function requestRandomness(
+        bytes32 _jobId,
+        uint256 _fee,
+        uint256 _seed
+    ) external returns (bytes32 requestId);
 }
