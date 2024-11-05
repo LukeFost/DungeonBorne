@@ -171,7 +171,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
 
         uint256 questId = nextQuestId++;
 
-        quests[questId] = Quest({
+        quests[questId] = IGameEngine.Quest({
             id: questId,
             name: name,
             description: description,
@@ -297,7 +297,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
             uint256 playerId = combat.playerId;
             uint256 monsterId = combat.monsterId;
             for (uint256 i = 1; i < nextQuestId; i++) {
-                Quest storage quest = quests[i];
+                IGameEngine.Quest storage quest = quests[i];
                 if (!quest.isActive) continue;
 
                 for (uint256 j = 0; j < quest.requiredMonsters.length; j++) {
