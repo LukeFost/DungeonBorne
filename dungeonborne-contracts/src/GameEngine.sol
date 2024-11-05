@@ -4,22 +4,19 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "./RuneStone.sol";
 import "./GameItems.sol";
 
-contract GameEngine is Ownable, ReentrancyGuard, Pausable, VRFConsumerBaseV2 {
+contract GameEngine is Ownable, ReentrancyGuard, Pausable, ChainlinkClient {
     // Contract references
     RuneStonesOfPower public immutable runeStones;
     GameItems public immutable gameItems;
     VRFCoordinatorV2Interface public immutable COORDINATOR;
 
     // VRF configuration
-    bytes32 public immutable keyHash;
-    uint64 public immutable subscriptionId;
-    uint16 public constant REQUEST_CONFIRMATIONS = 3;
-    uint32 public constant CALLBACK_GAS_LIMIT = 500000;
+    bytes32 private jobId;
+    uint256 private fee;
 
     // Game structures
     struct Stats {
@@ -117,17 +114,18 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, VRFConsumerBaseV2 {
     event DiceRollCompleted(uint256 indexed requestId, uint256 result);
 
     constructor(
-        address _vrfCoordinator,
+        address _link,
+        address _oracle,
         address _runeStones,
         address _gameItems,
-        bytes32 _keyHash,
-        uint64 _subscriptionId
-    ) VRFConsumerBaseV2(_vrfCoordinator) Ownable(msg.sender) {
-        COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
+        bytes32 _jobId
+    ) Ownable(msg.sender) {
+        setChainlinkToken(_link);
+        setChainlinkOracle(_oracle);
         runeStones = RuneStonesOfPower(_runeStones);
         gameItems = GameItems(_gameItems);
-        keyHash = _keyHash;
-        subscriptionId = _subscriptionId;
+        jobId = _jobId;
+        fee = 0; // 0 LINK
     }
 
     // Monster Management Functions
@@ -247,14 +245,14 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, VRFConsumerBaseV2 {
     }
 
     // VRF Functions
-    function requestDiceRoll(uint256 combatId) internal returns (uint256 requestId) {
-        requestId = COORDINATOR.requestRandomWords(
-            keyHash,
-            subscriptionId,
-            REQUEST_CONFIRMATIONS,
-            CALLBACK_GAS_LIMIT,
-            1 // number of random words
-        );
+    function requestDiceRoll(uint256 combatId) internal returns (bytes32 requestId) {
+        Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfillRandomWords.selector);
+        
+        req.addUint("minVal", 1);
+        req.addUint("maxVal", 20);
+        req.add("contact", "your_contact_info");
+        
+        requestId = sendChainlinkRequest(req, fee);
         
         rollRequests[requestId] = msg.sender;
         combatRolls[requestId] = combatId;
@@ -262,18 +260,15 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable, VRFConsumerBaseV2 {
         emit DiceRollRequested(requestId, combatId);
     }
 
-    function fulfillRandomWords(
-        uint256 requestId,
-        uint256[] memory randomWords
-    ) internal override {
-        uint256 combatId = combatRolls[requestId];
+    function fulfillRandomWords(bytes32 _requestId, uint256 _randomNumber) public recordChainlinkFulfillment(_requestId) {
+        uint256 combatId = combatRolls[_requestId];
         Combat storage combat = combats[combatId];
         require(combat.isActive, "GameEngine: Combat not active");
 
-        uint256 roll = (randomWords[0] % 20) + 1; // d20 roll
+        uint256 roll = (_randomNumber % 20) + 1; // d20 roll
         processCombatRoll(combatId, roll);
         
-        emit DiceRollCompleted(requestId, roll);
+        emit DiceRollCompleted(_requestId, roll);
     }
 
     function processCombatRoll(uint256 combatId, uint256 roll) internal {
