@@ -90,8 +90,8 @@ contract GameEngine is IGameEngine, VRFConsumerBaseV2, Ownable {
         (,, bool isActive) = runeStone.getRuneStoneDetails(runeStoneId);
         require(isActive, "GameEngine: RuneStone not active");
 
-        // Approve GameEngine to burn RuneStone
-        runeStone.setApprovalForAll(address(this), true);
+        // Transfer RuneStone to GameEngine
+        runeStone.safeTransferFrom(msg.sender, address(this), runeStoneId, 1, "");
 
         // Store combat request for VRF callback
         uint256 requestId = vrfCoordinator.requestRandomWords(
