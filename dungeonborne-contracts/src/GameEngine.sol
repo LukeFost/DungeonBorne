@@ -66,7 +66,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
 
     mapping(uint256 => Monster) public monsters;
     mapping(uint256 => Player) public players;
-    mapping(uint256 => Quest) public quests;
+    mapping(uint256 => IGameEngine.Quest) public quests;
     mapping(uint256 => Combat) public combats;
     mapping(uint256 => mapping(uint256 => bool)) public questProgress; // questId => monsterId => defeated
 
