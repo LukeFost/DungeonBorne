@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../lib/openzeppelin-contracts//contracts/access/Ownable.sol";
-import "../lib/openzeppelin-contracts//contracts/utils/ReentrancyGuard.sol";
-import "../lib/openzeppelin-contracts//contracts/utils/Pausable.sol";
-import "../lib/openzeppelin-contracts//contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./RuneStone.sol";
 import "./GameItems.sol";
 import "./IGameEngine.sol";
@@ -213,7 +213,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
             playerTurn: true,
             isActive: true,
             lastAction: block.timestamp,
-            pendingRolls: new uint256
+            pendingRolls: new uint256[](0)
         });
 
         emit CombatStarted(combatId, playerId, monsterId);
