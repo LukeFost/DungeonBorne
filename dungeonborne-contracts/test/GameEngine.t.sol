@@ -7,7 +7,7 @@ import "../src/RuneStone.sol";
 import "../src/GameItems.sol";
 import "../src/IGameEngine.sol";
 
-using GameEngine for Combat;
+using GameEngine for IGameEngine.Combat;
 
 contract GameEngineTest is Test {
     GameEngine public gameEngine;
