@@ -203,16 +203,16 @@ contract GameEngineTest is Test, ERC1155Holder {
             RuneStone.PowerLevel.COMMON
         );
         
-        // Attack monster as player which triggers VRF request
+        // Attack monster as player
         vm.prank(player);
         gameEngine.attack(INITIAL_MONSTER_ID, tokenId);
         
-        // Mock VRF callback
+        // Generate and fulfill random number
         uint256[] memory randomWords = new uint256[](1);
-        randomWords[0] = 12345; // Random number for testing
+        randomWords[0] = 12345;
         
-        // Note: In the MVP, the randomness isn't used yet, but this verifies the VRF integration works
-        vrfCoordinator.fulfillRandomWords(1, address(gameEngine));
+        // Request ID is always 1 for first request in VRFCoordinatorV2Mock
+        vrfCoordinator.fulfillRandomWordsWithOverride(1, address(gameEngine), randomWords);
     }
 }
 
