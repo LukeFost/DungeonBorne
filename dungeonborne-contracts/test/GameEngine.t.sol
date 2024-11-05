@@ -60,6 +60,10 @@ contract GameEngineTest is Test, ERC1155Holder {
         vm.deal(player, 100 ether);
         MockERC1155Receiver mockReceiver = new MockERC1155Receiver();
         vm.etch(player, address(mockReceiver).code);
+
+        // Approve GameEngine to burn RuneStones
+        vm.prank(player);
+        runeStone.setApprovalForAll(address(gameEngine), true);
     }
     
     function test_SpawnMonster() public {
