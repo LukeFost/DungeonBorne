@@ -15,38 +15,55 @@ contract GameEngineTest is Test {
     address owner = address(1);
     address player1 = address(2);
     address player2 = address(3);
+    
+    // Default stats for testing
+    IGameEngine.Stats defaultStats = IGameEngine.Stats({
+        hp: 10,
+        maxHp: 10,
+        ac: 12,
+        str: 14,
+        dex: 12,
+        con: 12,
+        intel: 10,
+        wis: 10,
+        cha: 8
+    });
 
     function setUp() public {
         vm.startPrank(owner);
         runeStones = new RuneStonesOfPower();
         gameItems = new GameItems();
         gameEngine = new GameEngine(address(runeStones), address(gameItems));
+        
+        // Setup initial game state
+        gameEngine.spawnMonster("Test Monster", 1, defaultStats, 100, 100, 0);
         vm.stopPrank();
     }
 
     function testSpawnMonster() public {
         vm.startPrank(owner);
+        
+        uint256 monsterId = 2; // First monster was created in setUp
+        gameEngine.spawnMonster("Goblin", 1, defaultStats, 100, 100, 0);
 
-        IGameEngine.Stats memory stats = IGameEngine.Stats({
-            hp: 10,
-            maxHp: 10,
-            ac: 12,
-            str: 14,
-            dex: 12,
-            con: 12,
-            intel: 10,
-            wis: 10,
-            cha: 8
-        });
+        (
+            uint256 id,
+            string memory name,
+            uint8 level,
+            IGameEngine.Stats memory monsterStats,
+            IGameEngine.Position memory pos,
+            bool isActive,
+            ,  // spawnTime
+            // lastInteraction
+        ) = gameEngine.monsters(monsterId);
 
-        gameEngine.spawnMonster("Goblin", 1, stats, 100, 100, 0);
-
-        (uint256 id, string memory name, uint8 level, IGameEngine.Stats memory stats, IGameEngine.Position memory pos, bool isActive, uint256 spawnTime, uint256 lastInteraction) = gameEngine.monsters(1);
-
-        assertEq(id, 1);
-        assertEq(name, "Goblin");
-        assertEq(level, 1);
-        assertTrue(isActive);
+        assertEq(id, monsterId, "Monster ID mismatch");
+        assertEq(name, "Goblin", "Monster name mismatch");
+        assertEq(level, 1, "Monster level mismatch");
+        assertTrue(isActive, "Monster should be active");
+        assertEq(monsterStats.hp, defaultStats.hp, "Monster HP mismatch");
+        assertEq(pos.x, 100, "Monster X position mismatch");
+        assertEq(pos.y, 100, "Monster Y position mismatch");
 
         vm.stopPrank();
     }
@@ -75,7 +92,7 @@ contract GameEngineTest is Test {
     function testRegisterPlayer() public {
         vm.startPrank(player1);
 
-        IGameEngine.Stats memory stats = IGameEngine.Stats({
+        IGameEngine.Stats memory playerStats = IGameEngine.Stats({
             hp: 20,
             maxHp: 20,
             ac: 15,
@@ -87,15 +104,29 @@ contract GameEngineTest is Test {
             cha: 10
         });
 
-        gameEngine.registerPlayer("Hero1", stats);
+        gameEngine.registerPlayer("Hero1", playerStats);
 
-        (uint256 id, string memory name, IGameEngine.Stats memory statsRetrieved, IGameEngine.Position memory pos, bool isActive, uint256 experience, uint256 lastAction, uint8 level) = gameEngine.players(1);
+        (
+            uint256 id,
+            address playerAddr,
+            string memory name,
+            IGameEngine.Stats memory statsRetrieved,
+            IGameEngine.Position memory pos,
+            bool isActive,
+            uint256 experience,
+            ,  // lastAction
+            uint8 level
+        ) = gameEngine.players(1);
 
-        assertEq(id, 1);
-        assertEq(name, "Hero1");
-        assertTrue(isActive);
-        assertEq(experience, 0);
-        assertEq(level, 1);
+        assertEq(id, 1, "Player ID mismatch");
+        assertEq(playerAddr, player1, "Player address mismatch");
+        assertEq(name, "Hero1", "Player name mismatch");
+        assertTrue(isActive, "Player should be active");
+        assertEq(experience, 0, "Initial experience should be 0");
+        assertEq(level, 1, "Initial level should be 1");
+        assertEq(statsRetrieved.hp, playerStats.hp, "Player HP mismatch");
+        assertEq(pos.x, 0, "Initial X position should be 0");
+        assertEq(pos.y, 0, "Initial Y position should be 0");
 
         vm.stopPrank();
     }
