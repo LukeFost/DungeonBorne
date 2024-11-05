@@ -56,7 +56,7 @@ contract GameEngineSpells is GameEngine, IGameEngine {
         uint256 targetId,
         uint16 targetX,
         uint16 targetY
-    ) external override whenNotPaused {
+    ) external whenNotPaused {
         require(playerSpells[msg.sender][spellId], "Spell not learned");
         require(
             block.timestamp >= spellCooldowns[msg.sender][spellId],
