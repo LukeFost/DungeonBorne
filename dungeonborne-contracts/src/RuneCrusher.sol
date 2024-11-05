@@ -203,4 +203,137 @@ contract RuneCrusher is Ownable, ReentrancyGuard, Pausable {
     
     // Required to receive ETH
     receive() external payable {}
+}// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "forge-std/Test.sol";
+import "../src/RuneCrusher.sol";
+import "../src/RuneStone.sol";
+import "../src/GameItems.sol";
+
+contract RuneCrusherTest is Test {
+    RuneCrusher public runeCrusher;
+    RuneStonesOfPower public runeStones;
+    GameItems public gameItems;
+    
+    address public owner;
+    address public feeCollector;
+    address public player;
+    
+    uint256 public constant CRUSHING_FEE = 0.01 ether;
+
+    function setUp() public {
+        owner = address(this);
+        feeCollector = makeAddr("feeCollector");
+        player = makeAddr("player");
+
+        // Deploy contracts
+        runeStones = new RuneStonesOfPower();
+        gameItems = new GameItems();
+        runeCrusher = new RuneCrusher(
+            address(runeStones),
+            address(gameItems),
+            feeCollector,
+            CRUSHING_FEE
+        );
+
+        // Setup permissions
+        runeStones.setMinter(address(runeCrusher), true);
+        gameItems.setCrusher(address(runeCrusher), true);
+
+        // Create a test item and rune
+        gameItems.createItem(1, "Test Item", GameItems.ItemType.WEAPON, GameItems.Rarity.COMMON, 1, new uint256[](1), new uint256[](1));
+        gameItems.createItem[1] = 1;
+        gameItems.createItem[1] = 100;
+        runeStones.createRuneStone(1, "Test Rune", 10, 0);
+
+        // Mint some items to the player
+        vm.prank(owner);
+        gameItems.mint(player, 1, 10, "");
+    }
+
+    function testCrushItems() public {
+        vm.startPrank(player);
+        vm.deal(player, 1 ether);
+
+        // Approve RuneCrusher to spend player's items
+        gameItems.setApprovalForAll(address(runeCrusher), true);
+
+        // Crush items
+        runeCrusher.crushItems{value: CRUSHING_FEE}(1, 1);
+
+        // Check results
+        assertEq(gameItems.balanceOf(player, 1), 9);
+        assertEq(runeStones.balanceOf(player, 1), 100);
+
+        vm.stopPrank();
+    }
+
+    function testFailInsufficientFee() public {
+        vm.prank(player);
+        vm.expectRevert("RuneCrusher: Insufficient fee");
+        runeCrusher.crushItems{value: CRUSHING_FEE - 1 wei}(1, 1);
+    }
+
+    function testFailCrushOnCooldown() public {
+        vm.startPrank(player);
+        vm.deal(player, 2 ether);
+
+        gameItems.setApprovalForAll(address(runeCrusher), true);
+
+        // First crush
+        runeCrusher.crushItems{value: CRUSHING_FEE}(1, 1);
+
+        // Attempt to crush again immediately
+        vm.expectRevert("RuneCrusher: Crushing on cooldown");
+        runeCrusher.crushItems{value: CRUSHING_FEE}(1, 1);
+
+        vm.stopPrank();
+    }
+
+    function testCollectFees() public {
+        // Perform a crush to generate fees
+        vm.startPrank(player);
+        vm.deal(player, 1 ether);
+        gameItems.setApprovalForAll(address(runeCrusher), true);
+        runeCrusher.crushItems{value: CRUSHING_FEE}(1, 1);
+        vm.stopPrank();
+
+        // Collect fees
+        uint256 initialBalance = feeCollector.balance;
+        vm.prank(feeCollector);
+        runeCrusher.collectFees();
+
+        assertEq(feeCollector.balance - initialBalance, CRUSHING_FEE);
+    }
+
+    function testSetFee() public {
+        uint256 newFee = 0.02 ether;
+        runeCrusher.setFee(newFee);
+        assertEq(runeCrusher.crushingFee(), newFee);
+    }
+
+    function testSetFeeCollector() public {
+        address newCollector = makeAddr("newCollector");
+        runeCrusher.setFeeCollector(newCollector);
+        assertEq(runeCrusher.feeCollector(), newCollector);
+    }
+
+    function testSetCooldown() public {
+        uint256 newCooldown = 2 hours;
+        runeCrusher.setCooldown(newCooldown);
+        assertEq(runeCrusher.crushCooldown(), newCooldown);
+    }
+
+    function testPauseAndUnpause() public {
+        runeCrusher.pause();
+        assertTrue(runeCrusher.paused());
+
+        vm.expectRevert("Pausable: paused");
+        vm.prank(player);
+        runeCrusher.crushItems{value: CRUSHING_FEE}(1, 1);
+
+        runeCrusher.unpause();
+        assertFalse(runeCrusher.paused());
+    }
 }
