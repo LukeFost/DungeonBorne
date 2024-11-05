@@ -134,6 +134,10 @@ contract GameEngine is IGameEngine, VRFConsumerBaseV2, Ownable {
                 monster.hp -= BASE_DAMAGE;
             }
 
+            // Approve GameEngine to burn RuneStone
+            vm.prank(request.player);
+            runeStone.setApprovalForAll(address(this), true);
+
             // Burn the RuneStone after use
             runeStone.burn(request.runeStoneId);
             

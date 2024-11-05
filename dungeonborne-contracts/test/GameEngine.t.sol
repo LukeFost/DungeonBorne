@@ -56,14 +56,15 @@ contract GameEngineTest is Test, ERC1155Holder {
         // Add consumer to VRF subscription
         vrfCoordinator.addConsumer(SUBSCRIPTION_ID, address(gameEngine));
         
-        // Setup player
+        // Setup player as ERC1155 receiver
         vm.deal(player, 100 ether);
         MockERC1155Receiver mockReceiver = new MockERC1155Receiver();
         vm.etch(player, address(mockReceiver).code);
 
         // Approve GameEngine to burn RuneStones
-        vm.prank(player);
+        vm.startPrank(player);
         runeStone.setApprovalForAll(address(gameEngine), true);
+        vm.stopPrank();
     }
     
     function test_SpawnMonster() public {
