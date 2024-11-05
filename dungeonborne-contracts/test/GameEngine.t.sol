@@ -154,23 +154,14 @@ contract GameEngineTest is Test {
             rewardAmounts
         );
 
-        (
-            uint256 id,
-            string memory name,
-            string memory description,
-            uint256[] memory requiredMonsters,
-            uint256[] memory requiredItems,
-            uint256[] memory rewardRuneIds,
-            uint256[] memory rewardAmounts,
-            bool isActive
-        ) = gameEngine.quests(1);
+        Quest memory quest = gameEngine.quests(1);
 
-        assertEq(id, 1);
-        assertEq(name, "Slay the Goblin");
-        assertEq(description, "Kill the goblin terrorizing the village");
-        assertEq(requiredMonsters.length, 1);
-        assertEq(requiredMonsters[0], 1);
-        assertTrue(isActive);
+        assertEq(quest.id, 1);
+        assertEq(quest.name, "Slay the Goblin");
+        assertEq(quest.description, "Kill the goblin terrorizing the village");
+        assertEq(quest.requiredMonsters.length, 1);
+        assertEq(quest.requiredMonsters[0], 1);
+        assertTrue(quest.isActive);
 
         vm.stopPrank();
     }
@@ -186,13 +177,13 @@ contract GameEngineTest is Test {
 
         gameEngine.initiateCombat(1, 1);
 
-        (uint256 id, uint256 playerId, uint256 monsterId, uint8 playerHp, uint8 monsterHp, bool playerTurn, bool isActive, uint256 lastAction) = gameEngine.combats(1);
+        Combat memory combat = gameEngine.combats(1);
 
-        assertEq(id, 1);
-        assertEq(playerId, 1);
-        assertEq(monsterId, 1);
-        assertTrue(playerTurn);
-        assertTrue(isActive);
+        assertEq(combat.id, 1);
+        assertEq(combat.playerId, 1);
+        assertEq(combat.monsterId, 1);
+        assertTrue(combat.playerTurn);
+        assertTrue(combat.isActive);
 
         vm.stopPrank();
     }
