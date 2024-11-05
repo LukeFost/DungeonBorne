@@ -199,7 +199,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     }
 
     function performCombatAction(uint256 combatId) external {
-        Combat storage combat = combats[combatId];
+        IGameEngine.Combat storage combat = combats[combatId];
         require(combat.isActive, "GameEngine: Combat not active");
         require(block.timestamp - combat.lastAction <= COMBAT_TIMEOUT, "GameEngine: Combat timeout");
 
@@ -224,7 +224,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     function fulfillRandomness(bytes32 _requestId, uint256 _randomness) external {
         require(msg.sender == address(oracle), "Only LinkWellNodes can fulfill");
         uint256 combatId = combatRolls[_requestId];
-        Combat storage combat = combats[combatId];
+        IGameEngine.Combat storage combat = combats[combatId];
         require(combat.isActive, "GameEngine: Combat not active");
 
         uint256 roll = (_randomness % 20) + 1; // Ensure the roll is between 1 and 20
@@ -234,7 +234,7 @@ contract GameEngine is Ownable, ReentrancyGuard, Pausable {
     }
 
     function processCombatRoll(uint256 combatId, uint256 roll) internal {
-        Combat storage combat = combats[combatId];
+        IGameEngine.Combat storage combat = combats[combatId];
         Player storage player = players[combat.playerId];
         Monster storage monster = monsters[combat.monsterId];
 
