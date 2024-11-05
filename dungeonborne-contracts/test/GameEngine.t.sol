@@ -8,6 +8,9 @@ import "../src/GameItems.sol";
 import "../src/IGameEngine.sol";
 
 contract GameEngineTest is Test {
+    using { GameEngine.Quest } for GameEngine;
+
+contract GameEngineTest is Test {
     GameEngine public gameEngine;
     RuneStonesOfPower public runeStones;
     GameItems public gameItems;
@@ -154,14 +157,14 @@ contract GameEngineTest is Test {
             rewardAmounts
         );
 
-        (uint256 id, string memory name, string memory description, uint256[] memory reqMonsters, uint256[] memory reqItems, uint256[] memory rewardIds, uint256[] memory rewardAmts, bool isActive) = gameEngine.quests(1);
+        Quest memory quest = gameEngine.quests(1);
 
-        assertEq(id, 1);
-        assertEq(name, "Slay the Goblin");
-        assertEq(description, "Kill the goblin terrorizing the village");
-        assertEq(reqMonsters.length, 1);
-        assertEq(reqMonsters[0], 1);
-        assertTrue(isActive);
+        assertEq(quest.id, 1);
+        assertEq(quest.name, "Slay the Goblin");
+        assertEq(quest.description, "Kill the goblin terrorizing the village");
+        assertEq(quest.requiredMonsters.length, 1);
+        assertEq(quest.requiredMonsters[0], 1);
+        assertTrue(quest.isActive);
 
         vm.stopPrank();
     }
